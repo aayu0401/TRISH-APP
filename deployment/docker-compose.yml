@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: trish-postgres
+    environment:
+      POSTGRES_DB: trish_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - trish-network
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: trish-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trish_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - trish-network
+    volumes:
+      - ./uploads:/app/uploads
+
+  # FastAPI AI Engine
+  ai-engine:
+    build:
+      context: ./ai_engine
+      dockerfile: Dockerfile
+    container_name: trish-ai
+    ports:
+      - "8000:8000"
+    networks:
+      - trish-network
+
+volumes:
+  postgres_data:
+
+networks:
+  trish-network:
+    driver: bridge

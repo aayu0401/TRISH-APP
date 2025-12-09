@@ -1,0 +1,6 @@
+.DS_Store
+**/target
+**/.gradle
+**/.idea
+**/build
+**/venv
