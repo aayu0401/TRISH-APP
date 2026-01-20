@@ -45,3 +45,38 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_plan ON subscriptions(plan);
 CREATE INDEX IF NOT EXISTS idx_personality_user ON personality_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_personality_mbti ON personality_profiles(mbti_type);
 CREATE INDEX IF NOT EXISTS idx_personality_enneagram ON personality_profiles(enneagram_type);
+
+-- Block/Report indexes (Phase 1)
+CREATE INDEX IF NOT EXISTS idx_blocks_blocker ON blocks(blocker_id);
+CREATE INDEX IF NOT EXISTS idx_blocks_blocked ON blocks(blocked_id);
+CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_reports_reported ON reports(reported_id);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+
+-- Video Call indexes (Phase 2)
+CREATE INDEX IF NOT EXISTS idx_video_calls_caller ON video_calls(caller_id);
+CREATE INDEX IF NOT EXISTS idx_video_calls_receiver ON video_calls(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_video_calls_status ON video_calls(status);
+
+-- Story indexes (Phase 3)
+CREATE INDEX IF NOT EXISTS idx_stories_user ON stories(user_id);
+CREATE INDEX IF NOT EXISTS idx_stories_expires ON stories(expires_at);
+CREATE INDEX IF NOT EXISTS idx_story_views_story ON story_views(story_id);
+CREATE INDEX IF NOT EXISTS idx_story_views_viewer ON story_views(viewer_id);
+
+-- Post/Feed indexes (Phase 3)
+CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at);
+CREATE INDEX IF NOT EXISTS idx_post_likes_post ON post_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_likes_user ON post_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
+
+-- Profile View indexes (Phase 4)
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewed ON profile_views(viewed_user_id);
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewer ON profile_views(viewer_id);
+
+-- Notification indexes (Phase 5)
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user ON fcm_tokens(user_id);
