@@ -14,6 +14,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     @Query("SELECT m FROM Message m WHERE m.match.id = :matchId ORDER BY m.sentAt ASC")
     List<Message> findByMatchIdOrderBySentAt(@Param("matchId") Long matchId);
+
+    @Query("SELECT m FROM Message m WHERE m.match.id = :matchId ORDER BY m.sentAt DESC")
+    List<Message> findByMatchIdOrderBySentAtDesc(@Param("matchId") Long matchId);
     
     @Query("SELECT m FROM Message m WHERE m.receiver.id = :userId AND m.isRead = false")
     List<Message> findUnreadMessagesByReceiver(@Param("userId") Long userId);

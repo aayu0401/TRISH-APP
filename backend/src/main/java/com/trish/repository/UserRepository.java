@@ -16,10 +16,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByEmail(String email);
     
-    @Query("SELECT u FROM User u WHERE u.isActive = true AND u.id != :userId " +
-           "AND u.gender = :interestedInGender " +
-           "AND (u.dateOfBirth BETWEEN :minBirthDate AND :maxBirthDate) " +
-           "AND u.latitude IS NOT NULL AND u.longitude IS NOT NULL")
+    @Query("SELECT u FROM User u WHERE u.isActive = true AND u.id <> :userId " +
+           "AND (:interestedInGender IS NULL OR u.gender = :interestedInGender) " +
+           "AND (u.dateOfBirth BETWEEN :minBirthDate AND :maxBirthDate)")
     List<User> findPotentialMatches(
         @Param("userId") Long userId,
         @Param("interestedInGender") User.Gender interestedInGender,

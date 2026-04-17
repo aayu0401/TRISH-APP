@@ -3,11 +3,15 @@ import 'package:animate_do/animate_do.dart';
 import '../theme/app_theme.dart';
 import '../models/gift.dart';
 import '../services/gift_service.dart';
+import '../models/match.dart';
+import '../services/auth_service.dart';
+import '../services/match_service.dart';
 
 class GiftsScreen extends StatefulWidget {
-  final String? matchId;
+  final int? receiverId;
+  final String? receiverName;
   
-  const GiftsScreen({super.key, this.matchId});
+  const GiftsScreen({super.key, this.receiverId, this.receiverName});
 
   @override
   State<GiftsScreen> createState() => _GiftsScreenState();
@@ -15,19 +19,28 @@ class GiftsScreen extends StatefulWidget {
 
 class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStateMixin {
   final GiftService _giftService = GiftService();
+  final MatchService _matchService = MatchService();
+  final AuthService _authService = AuthService();
   late TabController _tabController;
   
   List<Gift> _gifts = [];
   List<GiftTransaction> _sentGifts = [];
   List<GiftTransaction> _receivedGifts = [];
   GiftCategory? _selectedCategory;
+  List<Match> _matches = [];
+  int? _currentUserId;
+  int? _selectedReceiverId;
+  String? _selectedReceiverName;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _selectedReceiverId = widget.receiverId;
+    _selectedReceiverName = widget.receiverName;
     _loadGifts();
+    _loadMatches();
   }
 
   @override
@@ -51,6 +64,18 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
     });
   }
 
+  Future<void> _loadMatches() async {
+    try {
+      _currentUserId ??= await _authService.getUserId();
+      final matches = await _matchService.getMatches();
+      if (!mounted) return;
+      setState(() => _matches = matches);
+    } catch (_e) {
+      if (!mounted) return;
+      setState(() => _matches = []);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,6 +87,7 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
           child: Column(
             children: [
               _buildAppBar(),
+              _buildRecipientPicker(),
               _buildCategoryFilter(),
               _buildTabBar(),
               Expanded(child: _buildTabBarView()),
@@ -98,6 +124,135 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecipientPicker() {
+    final hasReceiver = _selectedReceiverId != null;
+    final label = hasReceiver
+        ? 'Sending to: ${_selectedReceiverName ?? 'Match'}'
+        : 'Select a match to send gifts';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: AppTheme.mediumRadius,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              hasReceiver ? Icons.favorite_rounded : Icons.person_search_rounded,
+              color: AppTheme.primaryPink,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _pickRecipient();
+              },
+              child: Text(hasReceiver ? 'Change' : 'Choose'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickRecipient() async {
+    if (_matches.isEmpty) {
+      await _loadMatches();
+    }
+
+    if (!mounted) return;
+
+    if (_matches.isEmpty || _currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No matches available yet.')),
+      );
+      return;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.textTertiary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Choose a Match',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _matches.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final match = _matches[index];
+                    final other = match.getOtherUser(_currentUserId!);
+                    final receiverId = other.id;
+                    if (receiverId == null) return const SizedBox.shrink();
+
+                    return ListTile(
+                      onTap: () {
+                        setState(() {
+                          _selectedReceiverId = receiverId;
+                          _selectedReceiverName = other.name;
+                        });
+                        Navigator.pop(context);
+                      },
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.surfaceColor,
+                        backgroundImage: other.photos.isNotEmpty
+                            ? NetworkImage(other.photos.first.url)
+                            : null,
+                        child: other.photos.isEmpty
+                            ? const Icon(Icons.person_rounded, color: Colors.white)
+                            : null,
+                      ),
+                      title: Text(other.name),
+                      subtitle: Text(other.city ?? ''),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -448,6 +603,10 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
     String label;
     
     switch (status) {
+      case GiftTransactionStatus.accepted:
+        color = AppTheme.successGreen;
+        label = 'Accepted';
+        break;
       case GiftTransactionStatus.delivered:
         color = AppTheme.successGreen;
         label = 'Delivered';
@@ -459,6 +618,18 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
       case GiftTransactionStatus.processing:
         color = AppTheme.warningYellow;
         label = 'Processing';
+        break;
+      case GiftTransactionStatus.cancelled:
+        color = AppTheme.errorRed;
+        label = 'Cancelled';
+        break;
+      case GiftTransactionStatus.refunded:
+        color = AppTheme.infoBlue;
+        label = 'Refunded';
+        break;
+      case GiftTransactionStatus.pending:
+        color = AppTheme.textTertiary;
+        label = 'Pending';
         break;
       default:
         color = AppTheme.textTertiary;
@@ -577,16 +748,15 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
   }
 
   Future<void> _sendGift(Gift gift) async {
-    if (widget.matchId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a match to send gift')),
-      );
-      return;
+    if (_selectedReceiverId == null) {
+      await _pickRecipient();
+      if (_selectedReceiverId == null) return;
     }
 
     final result = await _giftService.sendGift(
-      receiverId: widget.matchId!,
+      receiverId: _selectedReceiverId!,
       giftId: gift.id,
+      deliveryAddress: 'Digital delivery',
     );
 
     if (result != null && mounted) {
@@ -598,10 +768,12 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
   }
 
   String _getCategoryLabel(GiftCategory category) {
-    return category.toString().split('.').last.replaceAllMapped(
-          RegExp(r'([A-Z])'),
-          (match) => ' ${match.group(0)}',
-        ).trim();
+    final raw = category.apiValue.replaceAll('_', ' ').toLowerCase();
+    return raw
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
   }
 
   IconData _getGiftIcon(GiftCategory category) {
@@ -612,12 +784,12 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
         return Icons.cake;
       case GiftCategory.jewelry:
         return Icons.diamond;
+      case GiftCategory.perfume:
+        return Icons.spa_rounded;
       case GiftCategory.gadgets:
         return Icons.devices;
       case GiftCategory.experiences:
         return Icons.celebration;
-      case GiftCategory.subscription:
-        return Icons.card_membership;
       case GiftCategory.virtual:
         return Icons.stars;
       default:

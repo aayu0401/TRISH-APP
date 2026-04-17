@@ -3,14 +3,16 @@
 ## ✅ **Current Status**
 
 ### **Running Services:**
-- ✅ **AI Engine**: http://localhost:8000 (RUNNING)
+- ✅ **Backend (Spring Boot)**: http://localhost:8080
+  - Health Check: http://localhost:8080/api/health
+- ✅ **React Frontend (Vite)**: http://localhost:5173
+- ✅ **AI Engine**: http://localhost:8000
   - Health Check: http://localhost:8000/health
   - API Docs: http://localhost:8000/docs
 
 ### **Not Running (Requires Installation):**
-- ❌ Backend (Spring Boot) - Requires Java 17+
-- ❌ Database (PostgreSQL) - Requires Docker
 - ❌ Frontend (Flutter) - Requires Flutter SDK
+- ❌ Database (PostgreSQL) - Requires Docker (recommended for production)
 
 ---
 
@@ -117,7 +119,17 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/health"
 Invoke-RestMethod -Uri "http://localhost:8000/health"
 ```
 
-### **Step 3: Run Flutter App**
+### **Step 3: Run React App (Recommended)**
+
+```powershell
+cd "c:\Users\44743\Downloads\TRISH_bundle (1)\frontend_react"
+npm install
+npm run dev
+```
+
+Open: http://localhost:5173
+
+### **Step 4: Run Flutter App (Optional)**
 
 ```powershell
 cd "c:\Users\44743\Downloads\TRISH_bundle (1)\frontend"
@@ -128,8 +140,8 @@ flutter pub get
 # Run on Chrome (web)
 flutter run -d chrome
 
-# Or run on Android emulator
-flutter run
+# Android emulator needs 10.0.2.2 to reach your host machine
+flutter run --dart-define=ENV=dev --dart-define=API_URL=http://10.0.2.2:8080 --dart-define=AI_ENGINE_URL=http://10.0.2.2:8000
 ```
 
 ---

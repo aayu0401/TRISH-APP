@@ -1,6 +1,7 @@
 package com.trish.service;
 
 import com.trish.model.User;
+import com.trish.repository.MatchRepository;
 import com.trish.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,6 +21,9 @@ public class EnhancedUserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MatchRepository matchRepository;
 
     /**
      * Get user by ID with caching
@@ -62,27 +66,47 @@ public class EnhancedUserService {
 
     /**
      * Search users by location with distance calculation
+     * Prioritizes boosted users and supports passport feature
      */
     public List<User> searchUsersByLocation(
-            Double latitude, 
-            Double longitude, 
+            User searcher,
             Double radiusKm,
             Pageable pageable) {
-        
-        // Haversine formula for distance calculation
-        // This is a simplified version - in production, use PostGIS or similar
+
+        Double baseLat = searcher.getIsPassportActive() ? searcher.getPassportLatitude() : searcher.getLatitude();
+        Double baseLon = searcher.getIsPassportActive() ? searcher.getPassportLongitude() : searcher.getLongitude();
+
+        if (baseLat == null || baseLon == null) {
+            return List.of();
+        }
+
         return userRepository.findAll(pageable).getContent().stream()
-            .filter(user -> {
-                if (user.getLatitude() == null || user.getLongitude() == null) {
-                    return false;
-                }
-                double distance = calculateDistance(
-                    latitude, longitude,
-                    user.getLatitude(), user.getLongitude()
-                );
-                return distance <= radiusKm;
-            })
-            .toList();
+                .filter(user -> !user.getId().equals(searcher.getId())) // Don't show self
+                .filter(user -> {
+                    Double userLat = user.getLatitude();
+                    Double userLon = user.getLongitude();
+
+                    if (userLat == null || userLon == null)
+                        return false;
+
+                    double distance = calculateDistance(baseLat, baseLon, userLat, userLon);
+                    return distance <= (radiusKm != null ? radiusKm : searcher.getMaxDistance());
+                })
+                .sorted((u1, u2) -> {
+                    // Priority 1: Boosted users
+                    boolean b1 = u1.getIsBoosted() != null && u1.getIsBoosted();
+                    boolean b2 = u2.getIsBoosted() != null && u2.getIsBoosted();
+                    if (b1 && !b2)
+                        return -1;
+                    if (!b1 && b2)
+                        return 1;
+
+                    // Priority 2: Distance
+                    double d1 = calculateDistance(baseLat, baseLon, u1.getLatitude(), u1.getLongitude());
+                    double d2 = calculateDistance(baseLat, baseLon, u2.getLatitude(), u2.getLongitude());
+                    return Double.compare(d1, d2);
+                })
+                .toList();
     }
 
     /**
@@ -95,8 +119,8 @@ public class EnhancedUserService {
         double dLon = Math.toRadians(lon2 - lon1);
 
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -116,8 +140,8 @@ public class EnhancedUserService {
      */
     public List<User> getVerifiedUsers(Pageable pageable) {
         return userRepository.findAll(pageable).getContent().stream()
-            .filter(User::isVerified)
-            .toList();
+                .filter(User::isVerified)
+                .toList();
     }
 
     /**
@@ -135,30 +159,36 @@ public class EnhancedUserService {
      */
     public UserStatistics getUserStatistics(Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         // Calculate various statistics
         return UserStatistics.builder()
-            .totalMatches(user.getMatches() != null ? user.getMatches().size() : 0)
-            .profileCompleteness(calculateProfileCompleteness(user))
-            .verificationStatus(user.isVerified())
-            .build();
+                .totalMatches(matchRepository.findActiveMatchesByUserId(userId).size())
+                .profileCompleteness(calculateProfileCompleteness(user))
+                .verificationStatus(user.isVerified())
+                .build();
     }
 
     private int calculateProfileCompleteness(User user) {
         int score = 0;
-        int totalFields = 10;
+        int totalFields = 8;
 
-        if (user.getName() != null && !user.getName().isEmpty()) score++;
-        if (user.getBio() != null && !user.getBio().isEmpty()) score++;
-        if (user.getDateOfBirth() != null) score++;
-        if (user.getGender() != null) score++;
-        if (user.getCity() != null) score++;
-        if (user.getPhotos() != null && !user.getPhotos().isEmpty()) score++;
-        if (user.getInterests() != null && !user.getInterests().isEmpty()) score++;
-        if (user.getLatitude() != null && user.getLongitude() != null) score++;
-        if (user.getOccupation() != null) score++;
-        if (user.getEducation() != null) score++;
+        if (user.getName() != null && !user.getName().isEmpty())
+            score++;
+        if (user.getBio() != null && !user.getBio().isEmpty())
+            score++;
+        if (user.getDateOfBirth() != null)
+            score++;
+        if (user.getGender() != null)
+            score++;
+        if (user.getCity() != null)
+            score++;
+        if (user.getPhotos() != null && !user.getPhotos().isEmpty())
+            score++;
+        if (user.getInterests() != null && !user.getInterests().isEmpty())
+            score++;
+        if (user.getLatitude() != null && user.getLongitude() != null)
+            score++;
 
         return (score * 100) / totalFields;
     }
@@ -203,8 +233,16 @@ public class EnhancedUserService {
         }
 
         // Getters
-        public int getTotalMatches() { return totalMatches; }
-        public int getProfileCompleteness() { return profileCompleteness; }
-        public boolean isVerificationStatus() { return verificationStatus; }
+        public int getTotalMatches() {
+            return totalMatches;
+        }
+
+        public int getProfileCompleteness() {
+            return profileCompleteness;
+        }
+
+        public boolean isVerificationStatus() {
+            return verificationStatus;
+        }
     }
 }

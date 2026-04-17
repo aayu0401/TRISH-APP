@@ -278,7 +278,7 @@ class _AdvancedFiltersScreenState extends State<AdvancedFiltersScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             dropdownColor: const Color(0xFF1a1a2e),
             decoration: InputDecoration(
               filled: true,

@@ -13,7 +13,11 @@ import java.util.Optional;
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
     
-    @Query("SELECT m FROM Match m WHERE m.isActive = true AND (m.user1.id = :userId OR m.user2.id = :userId) ORDER BY m.matchedAt DESC")
+    @Query("SELECT m FROM Match m " +
+            "JOIN FETCH m.user1 u1 " +
+            "JOIN FETCH m.user2 u2 " +
+            "WHERE m.isActive = true AND (u1.id = :userId OR u2.id = :userId) " +
+            "ORDER BY m.matchedAt DESC")
     List<Match> findActiveMatchesByUserId(@Param("userId") Long userId);
     
     @Query("SELECT m FROM Match m WHERE m.isActive = true AND " +

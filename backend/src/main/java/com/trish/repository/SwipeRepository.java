@@ -25,4 +25,6 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
     
     @Query("SELECT s.swiped.id FROM Swipe s WHERE s.swiper.id = :userId")
     List<Long> findSwipedUserIds(@Param("userId") Long userId);
+
+    Optional<Swipe> findTopBySwiperIdAndTypeOrderBySwipedAtDesc(Long swiperId, Swipe.SwipeType type);
 }

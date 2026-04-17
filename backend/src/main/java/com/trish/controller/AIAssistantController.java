@@ -1,11 +1,9 @@
 package com.trish.controller;
 
-import com.trish.security.JwtUtil;
-import com.trish.model.User;
+import com.trish.service.AIEngineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 
 @RestController
@@ -14,21 +12,12 @@ import java.util.*;
 public class AIAssistantController {
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private AIEngineService aiEngineService;
 
     @PostMapping("/chat-suggestions")
     public ResponseEntity<List<Map<String, Object>>> getChatSuggestions(
-            @RequestBody Map<String, String> request,
-            HttpServletRequest httpRequest) {
-        
-        // In production, integrate with AI/ML service
-        List<Map<String, Object>> suggestions = List.of(
-                Map.of("text", "That sounds interesting! Tell me more about it.", "category", "engaging"),
-                Map.of("text", "I'd love to hear your thoughts on that.", "category", "open-ended"),
-                Map.of("text", "What's your favorite thing about it?", "category", "question")
-        );
-        
-        return ResponseEntity.ok(suggestions);
+            @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(aiEngineService.getChatSuggestions(request));
     }
 
     @GetMapping("/icebreakers")
@@ -36,6 +25,7 @@ public class AIAssistantController {
             @RequestParam String matchId,
             @RequestParam(required = false) String category) {
         
+        // Use AI Engine for icebreakers if available
         List<Map<String, Object>> icebreakers = List.of(
                 Map.of("question", "If you could travel anywhere right now, where would you go?", "category", "travel"),
                 Map.of("question", "What's the best concert or live event you've been to?", "category", "entertainment"),
@@ -47,6 +37,7 @@ public class AIAssistantController {
 
     @GetMapping("/analyze-conversation/{matchId}")
     public ResponseEntity<Map<String, Object>> analyzeConversation(@PathVariable String matchId) {
+        // Implementation would fetch messages and send to AI Engine
         Map<String, Object> analysis = Map.of(
                 "sentimentScore", 0.85,
                 "engagementLevel", "high",
@@ -59,7 +50,7 @@ public class AIAssistantController {
 
     @PostMapping("/generate-response")
     public ResponseEntity<Map<String, String>> generateResponse(@RequestBody Map<String, String> request) {
-        // In production, use GPT/LLM API
+        // Could call AI Engine for text generation
         Map<String, String> response = Map.of(
                 "response", "That's really fascinating! I'd love to know more about your experience with that."
         );
@@ -69,13 +60,9 @@ public class AIAssistantController {
 
     @PostMapping("/detect-red-flags")
     public ResponseEntity<Map<String, Object>> detectRedFlags(@RequestBody Map<String, String> request) {
-        // In production, use AI moderation service
-        Map<String, Object> result = Map.of(
-                "redFlags", List.of(),
-                "safetyScore", 100,
-                "isSafe", true
-        );
-        
+        Map<String, Object> payload = new HashMap<>();
+        payload.putAll(request);
+        Map<String, Object> result = aiEngineService.analyzeConversationSecurity(payload);
         return ResponseEntity.ok(result);
     }
 
@@ -111,5 +98,10 @@ public class AIAssistantController {
         );
         
         return ResponseEntity.ok(insights);
+    }
+
+    @PostMapping("/wingman/chat")
+    public ResponseEntity<Map<String, Object>> chatWithWingman(@RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(aiEngineService.chatWithWingman(request));
     }
 }

@@ -79,7 +79,13 @@ public class SubscriptionService {
         subscription.setPromoCode(request.getPromoCode());
         subscription.setPaymentId(UUID.randomUUID().toString());
 
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+
+        // Keep user's premium flag in sync with active subscription
+        user.setIsPremium(plan != Subscription.SubscriptionPlan.FREE);
+        userRepository.save(user);
+
+        return saved;
     }
 
     @Transactional
@@ -90,6 +96,9 @@ public class SubscriptionService {
             subscription.setStatus(Subscription.SubscriptionStatus.CANCELLED);
             subscription.setAutoRenew(false);
             subscriptionRepository.save(subscription);
+
+            user.setIsPremium(false);
+            userRepository.save(user);
             return true;
         }
         return false;

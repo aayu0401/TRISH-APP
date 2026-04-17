@@ -44,6 +44,20 @@ class MatchService {
     }
   }
 
+  Future<Map<String, dynamic>> rewind() async {
+    final headers = await _authService.getAuthHeaders();
+    final response = await http.post(
+      Uri.parse('$API_URL/api/rewind'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to rewind');
+    }
+  }
+
   Future<List<User>> getRecommendations() async {
     final headers = await _authService.getAuthHeaders();
     final response = await http.get(

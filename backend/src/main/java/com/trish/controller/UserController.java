@@ -52,26 +52,38 @@ public class UserController {
     }
     
     @PutMapping("/preferences")
-    public ResponseEntity<User> updatePreferences(
+    public ResponseEntity<?> updatePreferences(
             Authentication authentication,
             @RequestBody Map<String, Object> preferences) {
         Long userId = (Long) authentication.getPrincipal();
-        
-        User.Gender interestedInGender = preferences.containsKey("interestedInGender") 
-            ? User.Gender.valueOf((String) preferences.get("interestedInGender")) 
-            : null;
-        Integer minAge = preferences.containsKey("minAge") 
-            ? (Integer) preferences.get("minAge") 
-            : null;
-        Integer maxAge = preferences.containsKey("maxAge") 
-            ? (Integer) preferences.get("maxAge") 
-            : null;
-        Integer maxDistance = preferences.containsKey("maxDistance") 
-            ? (Integer) preferences.get("maxDistance") 
-            : null;
-        
+
+        User.Gender interestedInGender = null;
+        if (preferences != null && preferences.containsKey("interestedInGender") && preferences.get("interestedInGender") != null) {
+            try {
+                interestedInGender = User.Gender.valueOf(preferences.get("interestedInGender").toString());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid interestedInGender value"));
+            }
+        }
+
+        Integer minAge = readInt(preferences, "minAge");
+        Integer maxAge = readInt(preferences, "maxAge");
+        Integer maxDistance = readInt(preferences, "maxDistance");
+
         User user = userService.updatePreferences(userId, interestedInGender, minAge, maxAge, maxDistance);
         return ResponseEntity.ok(user);
+    }
+
+    private Integer readInt(Map<String, Object> map, String key) {
+        if (map == null || key == null || !map.containsKey(key)) return null;
+        Object value = map.get(key);
+        if (value == null) return null;
+        if (value instanceof Number number) return number.intValue();
+        try {
+            return Integer.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
     
     @PostMapping("/photos")

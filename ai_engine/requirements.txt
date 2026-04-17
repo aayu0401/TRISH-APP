@@ -3,3 +3,7 @@ uvicorn[standard]
 pydantic
 numpy
 scikit-learn
+scipy
+pandas
+joblib
+python-dateutil

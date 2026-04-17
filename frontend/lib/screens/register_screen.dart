@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart';
+import 'personality_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -82,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const PersonalityScreen()),
         );
       }
     } catch (e) {
@@ -99,195 +99,261 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        backgroundColor: Colors.transparent,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppTheme.darkBackground, AppTheme.cardBackground],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // Background Image with Blur
+          Positioned.fill(
+            child: Image.network(
+              'https://images.unsplash.com/photo-1516589174184-c68d8e5fccae?w=1600',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Create Account',
-                    style: Theme.of(context).textTheme.displayMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Join Trish and find your perfect match',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // Name Field
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'Full Name',
-                      prefixIcon: Icon(Icons.person_outline, color: AppTheme.primaryPink),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Email Field
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryPink),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Password Field
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryPink),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                          color: AppTheme.textSecondary,
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.darkBackground.withOpacity(0.4),
+                    AppTheme.darkBackground.withOpacity(0.95),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ColorFilter.mode(
+                AppTheme.darkBackground.withOpacity(0.2),
+                BlendMode.darken,
+              ),
+              child: const SizedBox(),
+            ),
+          ),
+
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: AppTheme.glassmorphicDecoration(
+                  borderRadius: AppTheme.extraLargeRadius,
+                  color: AppTheme.cardBackground.withOpacity(0.7),
+                  blur: 20,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header
+                      ShaderMask(
+                        shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
+                        child: const Text(
+                          'Apply for Membership',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w950,
+                            color: Colors.white,
+                            letterSpacing: -1,
+                          ),
                         ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
                       ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Date of Birth
-                  InkWell(
-                    onTap: _selectDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(15),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Connect with the world\'s most elite circle',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      child: Row(
+                      const SizedBox(height: 40),
+                      
+                      // Name Field
+                      _buildLabel('Full Legal Name'),
+                      TextFormField(
+                        controller: _nameController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          hintText: 'John Doe',
+                        ),
+                        validator: (value) => value!.isEmpty ? 'Name required' : null,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Email Field
+                      _buildLabel('Email Address'),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          hintText: 'name@example.com',
+                        ),
+                        validator: (value) => value!.contains('@') ? null : 'Invalid email',
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Password Field
+                      _buildLabel('Security Password'),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: '••••••••',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              color: AppTheme.textSecondary,
+                            ),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                        ),
+                        validator: (value) => value!.length >= 6 ? null : 'Minimum 6 characters',
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Date of Birth
+                      _buildLabel('Date of Birth'),
+                      InkWell(
+                        onTap: _selectDate,
+                        borderRadius: AppTheme.mediumRadius,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceColor.withOpacity(0.5),
+                            borderRadius: AppTheme.mediumRadius,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_month, color: AppTheme.primaryPink, size: 20),
+                              const SizedBox(width: 15),
+                              Text(
+                                _selectedDate == null
+                                    ? 'SELECT DATE'
+                                    : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+                                style: TextStyle(
+                                  color: _selectedDate == null ? AppTheme.textSecondary : AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      // Gender Selection
+                      _buildLabel('Gender Identification'),
+                      Row(
                         children: [
-                          const Icon(Icons.cake_outlined, color: AppTheme.primaryPink),
-                          const SizedBox(width: 15),
-                          Text(
-                            _selectedDate == null
-                                ? 'Date of Birth'
-                                : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                            style: TextStyle(
-                              color: _selectedDate == null ? AppTheme.textSecondary : AppTheme.textPrimary,
+                          Expanded(
+                            child: _GenderButton(
+                              label: 'MALE',
+                              isSelected: _selectedGender == 'MALE',
+                              onTap: () => setState(() => _selectedGender = 'MALE'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _GenderButton(
+                              label: 'FEMALE',
+                              isSelected: _selectedGender == 'FEMALE',
+                              onTap: () => setState(() => _selectedGender = 'FEMALE'),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Gender Selection
-                  Text('Gender', style: Theme.of(context).textTheme.bodyLarge),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _GenderButton(
-                          label: 'Male',
-                          isSelected: _selectedGender == 'MALE',
-                          onTap: () => setState(() => _selectedGender = 'MALE'),
+                      const SizedBox(height: 48),
+                      
+                      // Register Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: AppTheme.mediumRadius,
+                            boxShadow: AppTheme.glowShadow,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _register,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppTheme.mediumRadius,
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Text(
+                                    'Initialize Application',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _GenderButton(
-                          label: 'Female',
-                          isSelected: _selectedGender == 'FEMALE',
-                          onTap: () => setState(() => _selectedGender = 'FEMALE'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _GenderButton(
-                          label: 'Other',
-                          isSelected: _selectedGender == 'OTHER',
-                          onTap: () => setState(() => _selectedGender = 'OTHER'),
+                      const SizedBox(height: 32),
+                      
+                      // Login Link
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: RichText(
+                            text: const TextSpan(
+                              text: 'Existing member? ',
+                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                              children: [
+                                TextSpan(
+                                  text: 'Log In',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryPink,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                  
-                  // Register Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryPink.withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('Create Account', style: TextStyle(fontSize: 18)),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textSecondary,
+          letterSpacing: 1,
         ),
       ),
     );
@@ -309,14 +375,15 @@ class _GenderButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: AppTheme.mediumRadius,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: isSelected ? AppTheme.primaryGradient : null,
-          color: isSelected ? null : AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(15),
+          color: isSelected ? null : AppTheme.surfaceColor.withOpacity(0.5),
+          borderRadius: AppTheme.mediumRadius,
           border: Border.all(
-            color: isSelected ? Colors.transparent : AppTheme.textSecondary.withOpacity(0.3),
+            color: isSelected ? Colors.transparent : AppTheme.textSecondary.withOpacity(0.15),
           ),
         ),
         child: Center(
@@ -324,7 +391,9 @@ class _GenderButton extends StatelessWidget {
             label,
             style: TextStyle(
               color: isSelected ? Colors.white : AppTheme.textSecondary,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+              fontSize: 13,
+              letterSpacing: 0.5,
             ),
           ),
         ),

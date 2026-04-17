@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
+import 'screens/verify_email_screen.dart';
 import 'services/auth_service.dart';
+import 'widgets/trish_logo.dart';
 
 void main() {
   runApp(const TrishApp());
@@ -18,6 +21,12 @@ class TrishApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
+      routes: {
+        '/verify-email': (ctx) {
+          final token = ModalRoute.of(ctx)?.settings.arguments as String?;
+          return VerifyEmailScreen(token: token);
+        },
+      },
     );
   }
 }
@@ -62,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => isLoggedIn ? const HomeScreen() : const LoginScreen(),
+          builder: (_) => isLoggedIn ? const MainScreen() : const LoginScreen(),
         ),
       );
     }
@@ -85,37 +94,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryPink.withOpacity(0.5),
-                        blurRadius: 40,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                ShaderMask(
-                  shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                  child: const Text(
-                    'TRISH',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                const TrishLogo(size: 80),
+
                 const SizedBox(height: 10),
                 const Text(
                   'Find Your Perfect Match',

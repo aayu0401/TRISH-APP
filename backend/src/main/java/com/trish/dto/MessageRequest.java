@@ -7,11 +7,14 @@ import lombok.Data;
 
 @Data
 public class MessageRequest {
-    
+
     @NotNull(message = "Match ID is required")
     private Long matchId;
-    
+
     @NotBlank(message = "Message content is required")
     @Size(max = 2000, message = "Message cannot exceed 2000 characters")
     private String content;
+
+    private Long senderId;
+    private Long recipientId;
 }

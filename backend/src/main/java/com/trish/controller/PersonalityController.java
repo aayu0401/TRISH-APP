@@ -81,22 +81,22 @@ public class PersonalityController {
     public ResponseEntity<Map<String, Object>> getMBTIProfile(HttpServletRequest httpRequest) {
         User user = jwtUtil.getUserFromRequest(httpRequest);
         return personalityService.getPersonalityProfile(user)
-                .map(profile -> ResponseEntity.ok(Map.of(
+                .map(profile -> ResponseEntity.ok(Map.<String, Object>of(
                         "type", profile.getMbtiType() != null ? profile.getMbtiType() : "Not completed",
                         "completed", profile.getTestCompleted()
                 )))
-                .orElse(ResponseEntity.ok(Map.of("completed", false)));
+                .orElse(ResponseEntity.ok(Map.<String, Object>of("completed", false)));
     }
 
     @GetMapping("/enneagram")
     public ResponseEntity<Map<String, Object>> getEnneagramProfile(HttpServletRequest httpRequest) {
         User user = jwtUtil.getUserFromRequest(httpRequest);
         return personalityService.getPersonalityProfile(user)
-                .map(profile -> ResponseEntity.ok(Map.of(
+                .map(profile -> ResponseEntity.ok(Map.<String, Object>of(
                         "type", profile.getEnneagramType() != null ? profile.getEnneagramType() : "Not completed",
                         "completed", profile.getTestCompleted()
                 )))
-                .orElse(ResponseEntity.ok(Map.of("completed", false)));
+                .orElse(ResponseEntity.ok(Map.<String, Object>of("completed", false)));
     }
 
     @GetMapping("/recommendations")

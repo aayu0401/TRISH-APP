@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "video_calls", indexes = {
     @Index(name = "idx_caller", columnList = "caller_id"),
     @Index(name = "idx_receiver", columnList = "receiver_id"),
-    @Index(name = "idx_status", columnList = "status")
+    @Index(name = "idx_video_call_status", columnList = "status")
 })
 @Data
 @NoArgsConstructor

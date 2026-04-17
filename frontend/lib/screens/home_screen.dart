@@ -8,118 +8,31 @@ import '../config.dart';
 import 'matches_screen.dart';
 import 'profile_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+import 'wingman_screen.dart';
+
+ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-
-class _HomeScreenState extends State<HomeScreen> {
-  final _matchService = MatchService();
-  final _authService = AuthService();
-  List<User> _recommendations = [];
-  bool _isLoading = true;
-  int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRecommendations();
-  }
-
-  Future<void> _loadRecommendations() async {
-    try {
-      final recommendations = await _matchService.getRecommendations();
-      setState(() {
-        _recommendations = recommendations;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load recommendations: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleSwipe(int index, CardSwiperDirection direction) async {
-    if (index >= _recommendations.length) return;
-
-    final user = _recommendations[index];
-    String swipeType = 'PASS';
-
-    if (direction == CardSwiperDirection.right) {
-      swipeType = 'LIKE';
-    } else if (direction == CardSwiperDirection.top) {
-      swipeType = 'SUPER_LIKE';
-    }
-
-    try {
-      final result = await _matchService.swipe(
-        targetUserId: user.id!,
-        swipeType: swipeType,
-      );
-
-      if (result['matched'] == true && mounted) {
-        _showMatchDialog(user);
-      }
-    } catch (e) {
-      print('Swipe error: $e');
-    }
-  }
-
-  void _showMatchDialog(User user) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(30),
-          decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.favorite, size: 80, color: Colors.white),
-              const SizedBox(height: 20),
-              const Text(
-                "It's a Match!",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'You and ${user.name} liked each other',
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppTheme.primaryPink,
-                ),
-                child: const Text('Continue Swiping'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+// ... (omitted lines)
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const WingmanScreen()),
+          );
+        },
+        backgroundColor: const Color(0xFF6A11CB),
+        elevation: 10,
+        icon: const Icon(Icons.auto_awesome, color: Colors.white),
+        label: const Text("Ask Trish", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

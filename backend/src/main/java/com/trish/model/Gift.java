@@ -2,6 +2,9 @@ package com.trish.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,10 +43,11 @@ public class Gift {
 
     private Integer popularityScore = 0;
 
-    @Column(updatedAt = "CURRENT_TIMESTAMP", insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(updatedAt = "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", insertable = false, updatable = false)
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     public enum GiftCategory {

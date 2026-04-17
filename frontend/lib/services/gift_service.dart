@@ -16,10 +16,10 @@ class GiftService {
       List<String> params = [];
       
       if (category != null) {
-        params.add('category=${category.toString().split('.').last}');
+        params.add('category=${category.apiValue}');
       }
       if (type != null) {
-        params.add('type=${type.toString().split('.').last}');
+        params.add('type=${type.apiValue}');
       }
       
       if (params.isNotEmpty) {
@@ -45,7 +45,7 @@ class GiftService {
     }
   }
 
-  Future<Gift?> getGiftById(String giftId) async {
+  Future<Gift?> getGiftById(int giftId) async {
     try {
       final token = await _authService.getToken();
       if (token == null) return null;
@@ -69,10 +69,10 @@ class GiftService {
   }
 
   Future<GiftTransaction?> sendGift({
-    required String receiverId,
-    required String giftId,
+    required int receiverId,
+    required int giftId,
     String? message,
-    Map<String, dynamic>? deliveryDetails,
+    String? deliveryAddress,
   }) async {
     try {
       final token = await _authService.getToken();
@@ -88,7 +88,7 @@ class GiftService {
           'receiverId': receiverId,
           'giftId': giftId,
           'message': message,
-          'deliveryDetails': deliveryDetails,
+          'deliveryAddress': deliveryAddress,
         }),
       );
 
@@ -99,6 +99,26 @@ class GiftService {
     } catch (e) {
       print('Error sending gift: $e');
       return null;
+    }
+  }
+
+  Future<bool> acceptGift(int transactionId) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('$API_URL/api/gifts/accept/$transactionId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error accepting gift: $e');
+      return false;
     }
   }
 
@@ -150,7 +170,7 @@ class GiftService {
     }
   }
 
-  Future<GiftTransaction?> trackGift(String transactionId) async {
+  Future<GiftTransaction?> trackGift(int transactionId) async {
     try {
       final token = await _authService.getToken();
       if (token == null) return null;
@@ -173,7 +193,7 @@ class GiftService {
     }
   }
 
-  Future<bool> cancelGift(String transactionId) async {
+  Future<bool> cancelGift(int transactionId) async {
     try {
       final token = await _authService.getToken();
       if (token == null) return false;

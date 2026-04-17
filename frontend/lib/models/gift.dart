@@ -1,16 +1,18 @@
+import '../utils/url_utils.dart';
+import 'user.dart';
+
 class Gift {
-  final String id;
+  final int id;
   final String name;
   final String description;
   final double price;
   final String currency;
   final String imageUrl;
-  final String? animationUrl;
   final GiftCategory category;
   final GiftType type;
   final bool isAvailable;
   final int? stockQuantity;
-  final Map<String, dynamic>? metadata;
+  final int popularityScore;
 
   Gift({
     required this.id,
@@ -19,131 +21,174 @@ class Gift {
     required this.price,
     this.currency = 'INR',
     required this.imageUrl,
-    this.animationUrl,
     required this.category,
     required this.type,
     this.isAvailable = true,
     this.stockQuantity,
-    this.metadata,
+    this.popularityScore = 0,
   });
 
   factory Gift.fromJson(Map<String, dynamic> json) {
-    return Gift(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      currency: json['currency'] ?? 'INR',
-      imageUrl: json['imageUrl'] ?? '',
-      animationUrl: json['animationUrl'],
-      category: GiftCategory.values.firstWhere(
-        (e) => e.toString().split('.').last == json['category'],
-        orElse: () => GiftCategory.other,
-      ),
-      type: GiftType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-        orElse: () => GiftType.virtual,
-      ),
-      isAvailable: json['isAvailable'] ?? true,
-      stockQuantity: json['stockQuantity'],
-      metadata: json['metadata'],
-    );
-  }
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'price': price,
-      'currency': currency,
-      'imageUrl': imageUrl,
-      'animationUrl': animationUrl,
-      'category': category.toString().split('.').last,
-      'type': type.toString().split('.').last,
-      'isAvailable': isAvailable,
-      'stockQuantity': stockQuantity,
-      'metadata': metadata,
-    };
+    return Gift(
+      id: id,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: (json['price'] ?? 0).toDouble(),
+      currency: json['currency']?.toString() ?? 'INR',
+      imageUrl: resolveMediaUrl(json['imageUrl']?.toString()),
+      category: GiftCategoryX.fromApi(json['category']),
+      type: GiftTypeX.fromApi(json['type']),
+      isAvailable: json['isAvailable'] == null ? true : json['isAvailable'] == true,
+      stockQuantity: json['stockQuantity'] is int ? json['stockQuantity'] : int.tryParse(json['stockQuantity']?.toString() ?? ''),
+      popularityScore: json['popularityScore'] is int
+          ? json['popularityScore']
+          : int.tryParse(json['popularityScore']?.toString() ?? '') ?? 0,
+    );
   }
 }
 
 class GiftTransaction {
-  final String id;
-  final String senderId;
-  final String receiverId;
+  final int id;
+  final User sender;
+  final User receiver;
   final Gift gift;
+  final double amount;
   final String? message;
   final GiftTransactionStatus status;
-  final DateTime sentAt;
-  final DateTime? deliveredAt;
+  final String? deliveryAddress;
   final String? trackingNumber;
+  final DateTime? deliveredAt;
+  final DateTime createdAt;
 
   GiftTransaction({
     required this.id,
-    required this.senderId,
-    required this.receiverId,
+    required this.sender,
+    required this.receiver,
     required this.gift,
+    required this.amount,
     this.message,
     required this.status,
-    required this.sentAt,
-    this.deliveredAt,
+    this.deliveryAddress,
     this.trackingNumber,
+    this.deliveredAt,
+    required this.createdAt,
   });
 
   factory GiftTransaction.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
+
     return GiftTransaction(
-      id: json['id'] ?? '',
-      senderId: json['senderId'] ?? '',
-      receiverId: json['receiverId'] ?? '',
-      gift: Gift.fromJson(json['gift'] ?? {}),
-      message: json['message'],
-      status: GiftTransactionStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
-        orElse: () => GiftTransactionStatus.pending,
+      id: id,
+      sender: User.fromJson(
+        json['sender'] is Map ? Map<String, dynamic>.from(json['sender'] as Map) : const <String, dynamic>{},
       ),
-      sentAt: DateTime.parse(json['sentAt'] ?? DateTime.now().toIso8601String()),
-      deliveredAt: json['deliveredAt'] != null ? DateTime.parse(json['deliveredAt']) : null,
-      trackingNumber: json['trackingNumber'],
+      receiver: User.fromJson(
+        json['receiver'] is Map ? Map<String, dynamic>.from(json['receiver'] as Map) : const <String, dynamic>{},
+      ),
+      gift: Gift.fromJson(
+        json['gift'] is Map ? Map<String, dynamic>.from(json['gift'] as Map) : const <String, dynamic>{},
+      ),
+      amount: (json['amount'] ?? 0).toDouble(),
+      message: json['message']?.toString(),
+      status: GiftTransactionStatusX.fromApi(json['status']),
+      deliveryAddress: json['deliveryAddress']?.toString(),
+      trackingNumber: json['trackingNumber']?.toString(),
+      deliveredAt: json['deliveredAt'] != null ? DateTime.tryParse(json['deliveredAt'].toString()) : null,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'senderId': senderId,
-      'receiverId': receiverId,
-      'gift': gift.toJson(),
-      'message': message,
-      'status': status.toString().split('.').last,
-      'sentAt': sentAt.toIso8601String(),
-      'deliveredAt': deliveredAt?.toIso8601String(),
-      'trackingNumber': trackingNumber,
-    };
+enum GiftCategory { flowers, chocolates, jewelry, perfume, gadgets, experiences, virtual, other }
+
+extension GiftCategoryX on GiftCategory {
+  static GiftCategory fromApi(dynamic raw) {
+    final value = raw?.toString().toUpperCase();
+    switch (value) {
+      case 'FLOWERS':
+        return GiftCategory.flowers;
+      case 'CHOCOLATES':
+        return GiftCategory.chocolates;
+      case 'JEWELRY':
+        return GiftCategory.jewelry;
+      case 'PERFUME':
+        return GiftCategory.perfume;
+      case 'GADGETS':
+        return GiftCategory.gadgets;
+      case 'EXPERIENCES':
+        return GiftCategory.experiences;
+      case 'VIRTUAL':
+        return GiftCategory.virtual;
+      default:
+        return GiftCategory.other;
+    }
+  }
+
+  String get apiValue {
+    switch (this) {
+      case GiftCategory.flowers:
+        return 'FLOWERS';
+      case GiftCategory.chocolates:
+        return 'CHOCOLATES';
+      case GiftCategory.jewelry:
+        return 'JEWELRY';
+      case GiftCategory.perfume:
+        return 'PERFUME';
+      case GiftCategory.gadgets:
+        return 'GADGETS';
+      case GiftCategory.experiences:
+        return 'EXPERIENCES';
+      case GiftCategory.virtual:
+        return 'VIRTUAL';
+      case GiftCategory.other:
+        return 'OTHER';
+    }
   }
 }
 
-enum GiftCategory {
-  flowers,
-  chocolates,
-  jewelry,
-  gadgets,
-  experiences,
-  subscription,
-  virtual,
-  other,
+enum GiftType { physical, virtual }
+
+extension GiftTypeX on GiftType {
+  static GiftType fromApi(dynamic raw) {
+    final value = raw?.toString().toUpperCase();
+    switch (value) {
+      case 'PHYSICAL':
+        return GiftType.physical;
+      case 'VIRTUAL':
+      default:
+        return GiftType.virtual;
+    }
+  }
+
+  String get apiValue => this == GiftType.physical ? 'PHYSICAL' : 'VIRTUAL';
 }
 
-enum GiftType {
-  virtual,
-  physical,
-}
+enum GiftTransactionStatus { pending, processing, shipped, delivered, cancelled, refunded, accepted }
 
-enum GiftTransactionStatus {
-  pending,
-  processing,
-  shipped,
-  delivered,
-  cancelled,
-  refunded,
+extension GiftTransactionStatusX on GiftTransactionStatus {
+  static GiftTransactionStatus fromApi(dynamic raw) {
+    final value = raw?.toString().toUpperCase();
+    switch (value) {
+      case 'PENDING':
+        return GiftTransactionStatus.pending;
+      case 'PROCESSING':
+        return GiftTransactionStatus.processing;
+      case 'SHIPPED':
+        return GiftTransactionStatus.shipped;
+      case 'DELIVERED':
+        return GiftTransactionStatus.delivered;
+      case 'CANCELLED':
+        return GiftTransactionStatus.cancelled;
+      case 'REFUNDED':
+        return GiftTransactionStatus.refunded;
+      case 'ACCEPTED':
+        return GiftTransactionStatus.accepted;
+      default:
+        return GiftTransactionStatus.pending;
+    }
+  }
 }

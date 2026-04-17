@@ -1,132 +1,118 @@
 class Wallet {
-  final String id;
-  final String userId;
+  final int id;
+  final int userId;
   final double balance;
+  final double totalEarned;
+  final double totalSpent;
   final String currency;
-  final List<Transaction> transactions;
-  final bool isVerified;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final bool isActive;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Wallet({
     required this.id,
     required this.userId,
     required this.balance,
-    this.currency = 'INR',
-    required this.transactions,
-    this.isVerified = false,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.totalEarned,
+    required this.totalSpent,
+    required this.currency,
+    required this.isActive,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory Wallet.fromJson(Map<String, dynamic> json) {
-    return Wallet(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      balance: (json['balance'] ?? 0).toDouble(),
-      currency: json['currency'] ?? 'INR',
-      transactions: (json['transactions'] as List?)
-              ?.map((t) => Transaction.fromJson(t))
-              .toList() ??
-          [],
-      isVerified: json['isVerified'] ?? false,
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-    );
-  }
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'userId': userId,
-      'balance': balance,
-      'currency': currency,
-      'transactions': transactions.map((t) => t.toJson()).toList(),
-      'isVerified': isVerified,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
+    final dynamic user = json['user'];
+    final rawUserId = json['userId'] ?? (user is Map ? user['id'] : null);
+    final userId = rawUserId is int ? rawUserId : int.tryParse(rawUserId?.toString() ?? '') ?? 0;
+
+    return Wallet(
+      id: id,
+      userId: userId,
+      balance: (json['balance'] ?? 0).toDouble(),
+      totalEarned: (json['totalEarned'] ?? 0).toDouble(),
+      totalSpent: (json['totalSpent'] ?? 0).toDouble(),
+      currency: json['currency']?.toString() ?? 'INR',
+      isActive: json['isActive'] == null ? true : json['isActive'] == true,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
+    );
   }
 }
 
 class Transaction {
-  final String id;
-  final String walletId;
+  final int id;
   final TransactionType type;
   final double amount;
-  final String currency;
   final TransactionStatus status;
   final String? description;
   final String? referenceId;
-  final Map<String, dynamic>? metadata;
   final DateTime createdAt;
 
   Transaction({
     required this.id,
-    required this.walletId,
     required this.type,
     required this.amount,
-    this.currency = 'INR',
     required this.status,
     this.description,
     this.referenceId,
-    this.metadata,
     required this.createdAt,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
+
     return Transaction(
-      id: json['id'] ?? '',
-      walletId: json['walletId'] ?? '',
-      type: TransactionType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-        orElse: () => TransactionType.other,
-      ),
+      id: id,
+      type: TransactionTypeX.fromApi(json['type']),
       amount: (json['amount'] ?? 0).toDouble(),
-      currency: json['currency'] ?? 'INR',
-      status: TransactionStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
-        orElse: () => TransactionStatus.pending,
-      ),
-      description: json['description'],
-      referenceId: json['referenceId'],
-      metadata: json['metadata'],
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      status: TransactionStatusX.fromApi(json['status']),
+      description: json['description']?.toString(),
+      referenceId: json['referenceId']?.toString(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'walletId': walletId,
-      'type': type.toString().split('.').last,
-      'amount': amount,
-      'currency': currency,
-      'status': status.toString().split('.').last,
-      'description': description,
-      'referenceId': referenceId,
-      'metadata': metadata,
-      'createdAt': createdAt.toIso8601String(),
-    };
+enum TransactionType { credit, debit, refund, withdrawal, other, giftReceived }
+
+extension TransactionTypeX on TransactionType {
+  static TransactionType fromApi(dynamic raw) {
+    final value = raw?.toString().toUpperCase();
+    switch (value) {
+      case 'CREDIT':
+        return TransactionType.credit;
+      case 'DEBIT':
+        return TransactionType.debit;
+      case 'REFUND':
+        return TransactionType.refund;
+      case 'WITHDRAWAL':
+        return TransactionType.withdrawal;
+      default:
+        return TransactionType.other;
+    }
   }
 }
 
-enum TransactionType {
-  credit,
-  debit,
-  refund,
-  giftPurchase,
-  giftReceived,
-  subscription,
-  boost,
-  superLike,
-  other,
-}
+enum TransactionStatus { pending, completed, failed, cancelled }
 
-enum TransactionStatus {
-  pending,
-  completed,
-  failed,
-  cancelled,
-  refunded,
+extension TransactionStatusX on TransactionStatus {
+  static TransactionStatus fromApi(dynamic raw) {
+    final value = raw?.toString().toUpperCase();
+    switch (value) {
+      case 'COMPLETED':
+        return TransactionStatus.completed;
+      case 'FAILED':
+        return TransactionStatus.failed;
+      case 'CANCELLED':
+        return TransactionStatus.cancelled;
+      case 'PENDING':
+      default:
+        return TransactionStatus.pending;
+    }
+  }
 }

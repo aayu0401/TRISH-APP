@@ -3,13 +3,15 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:animate_do/animate_do.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
+import '../models/match.dart';
 import '../services/match_service.dart';
-import '../services/auth_service.dart';
 import '../widgets/profile_card.dart';
-import '../widgets/loading_widgets.dart';
+import '../utils/app_snackbar.dart';
+import '../services/profile_view_service.dart';
 import 'matches_screen.dart';
 import 'profile_screen.dart';
 import 'chat_screen.dart';
+import '../widgets/ai_assistant_overlay.dart';
 
 class EnhancedHomeScreen extends StatefulWidget {
   const EnhancedHomeScreen({super.key});
@@ -21,7 +23,7 @@ class EnhancedHomeScreen extends StatefulWidget {
 class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
     with TickerProviderStateMixin {
   final _matchService = MatchService();
-  final _authService = AuthService();
+  final _profileViewService = ProfileViewService();
   final CardSwiperController _swiperController = CardSwiperController();
   
   List<User> _recommendations = [];
@@ -68,9 +70,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) {
-        _showErrorSnackBar('Failed to load recommendations');
-      }
+      if (mounted) AppSnackBar.error(context, 'Failed to load recommendations');
     }
   }
 
@@ -82,18 +82,20 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
     });
   }
 
-  Future<void> _handleSwipe(int index, CardSwiperDirection direction) async {
-    if (index >= _recommendations.length) return;
+  Future<bool> _handleSwipe(int previousIndex, int? currentIndex, CardSwiperDirection direction) async {
+    if (previousIndex >= _recommendations.length) return true;
 
-    final user = _recommendations[index];
+    final user = _recommendations[previousIndex];
     String swipeType = 'PASS';
 
     if (direction == CardSwiperDirection.right) {
       swipeType = 'LIKE';
+      if (user.id != null) _profileViewService.recordView(user.id!).catchError((_) {});
       _showSwipeFeedback('Liked!', AppTheme.successGreen, Icons.favorite);
       setState(() => _todayLikes++);
     } else if (direction == CardSwiperDirection.top) {
       swipeType = 'SUPER_LIKE';
+      if (user.id != null) _profileViewService.recordView(user.id!).catchError((_) {});
       _showSwipeFeedback('Super Like!', AppTheme.accentBlue, Icons.star);
     } else if (direction == CardSwiperDirection.left) {
       _showSwipeFeedback('Passed', AppTheme.errorRed, Icons.close);
@@ -108,13 +110,28 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
       if (result['matched'] == true && mounted) {
         setState(() => _todayMatches++);
         await Future.delayed(const Duration(milliseconds: 300));
-        _showMatchDialog(user);
+        final matchJson = result['match'];
+        _showMatchDialog(user, matchJson: matchJson);
       }
     } catch (e) {
-      _showErrorSnackBar('Swipe failed. Please try again.');
+      if (mounted) AppSnackBar.error(context, 'Swipe failed. Please try again.');
     }
 
-    setState(() => _currentCardIndex = index + 1);
+    return true;
+  }
+
+  Future<void> _handleRewind() async {
+    try {
+      final result = await _matchService.rewind();
+      if (result['success'] == true && result['user'] != null && mounted) {
+        await _loadRecommendations();
+        AppSnackBar.success(context, 'Profile restored! Swipe again.');
+      } else if (mounted) {
+        AppSnackBar.info(context, 'No pass to rewind');
+      }
+    } catch (e) {
+      if (mounted) AppSnackBar.error(context, 'Rewind failed');
+    }
   }
 
   void _showSwipeFeedback(String text, Color color, IconData icon) {
@@ -169,7 +186,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
     });
   }
 
-  void _showMatchDialog(User user) {
+  void _showMatchDialog(User user, {Map<String, dynamic>? matchJson}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -243,10 +260,22 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
+                          Match? match;
+                          if (matchJson != null) {
+                            match = Match.fromJson(matchJson);
+                          } else {
+                            match = Match(
+                              id: 0,
+                              user1: user,
+                              user2: user,
+                              matchedAt: DateTime.now(),
+                              isActive: true,
+                            );
+                          }
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ChatScreen(match: user),
+                              builder: (_) => ChatScreen(match: match!),
                             ),
                           );
                         },
@@ -271,42 +300,46 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
     );
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: AppTheme.errorRed,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.darkGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildDailyStats(),
-              Expanded(child: _buildCardStack()),
-              _buildActionButtons(),
-            ],
+      backgroundColor: AppTheme.darkBackground,
+      body: Stack(
+        children: [
+          // Light Background Image
+          Positioned.fill(
+            child: Image.network(
+              'https://images.unsplash.com/photo-1520623321903-518f921f7ee9?w=1600', // Light aesthetic background
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          Positioned.fill(
+             child: Container(
+               decoration: BoxDecoration(
+                 gradient: LinearGradient(
+                   begin: Alignment.topCenter,
+                   end: Alignment.bottomCenter,
+                   colors: [
+                     Colors.white.withOpacity(0.9),
+                     AppTheme.darkBackground.withOpacity(0.8),
+                   ],
+                 ),
+               ),
+             ),
+          ),
+          
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildDailyStats(),
+                Expanded(child: _buildCardStack()),
+                _buildActionButtons(),
+              ],
+            ),
+          ),
+          const AIAssistantOverlay(context: 'home'),
+        ],
       ),
     );
   }
@@ -315,12 +348,12 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _HeaderButton(
-              icon: Icons.person_outline,
+              icon: Icons.person_outline_rounded,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -328,6 +361,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                 );
               },
             ),
+             // Gradient Text Logo
             ShaderMask(
               shaderCallback: (bounds) =>
                   AppTheme.primaryGradient.createShader(bounds),
@@ -335,14 +369,15 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                 'TRISH',
                 style: TextStyle(
                   fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
                   letterSpacing: 2,
+                  fontFamily: 'Nunito', // Assuming Nunito or similar rounded font
                 ),
               ),
             ),
             _HeaderButton(
-              icon: Icons.chat_bubble_outline,
+              icon: Icons.chat_bubble_outline_rounded,
               badge: _todayMatches > 0 ? _todayMatches.toString() : null,
               onPressed: () {
                 Navigator.push(
@@ -492,19 +527,25 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
               icon: Icons.close,
               color: AppTheme.errorRed,
               size: 65,
-              onPressed: () => _swiperController.swipe(CardSwiperDirection.left),
+              onPressed: _swiperController.swipeLeft,
+            ),
+            _SwipeButton(
+              icon: Icons.undo_rounded,
+              color: AppTheme.accentBlue,
+              size: 50,
+              onPressed: _handleRewind,
             ),
             _SwipeButton(
               icon: Icons.star,
               color: AppTheme.accentBlue,
               size: 55,
-              onPressed: () => _swiperController.swipe(CardSwiperDirection.top),
+              onPressed: _swiperController.swipeTop,
             ),
             _SwipeButton(
               icon: Icons.favorite,
               color: AppTheme.successGreen,
               size: 65,
-              onPressed: () => _swiperController.swipe(CardSwiperDirection.right),
+              onPressed: _swiperController.swipeRight,
             ),
           ],
         ),
@@ -530,35 +571,37 @@ class _HeaderButton extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(14),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
+                color: AppTheme.primaryPink.withOpacity(0.15),
+                blurRadius: 15,
+                spreadRadius: 2,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: IconButton(
-            icon: Icon(icon, color: AppTheme.textPrimary),
+            icon: Icon(icon, color: AppTheme.primaryPink),
             onPressed: onPressed,
             iconSize: 26,
+            padding: const EdgeInsets.all(12),
           ),
         ),
         if (badge != null)
           Positioned(
-            right: 0,
-            top: 0,
+            right: 4,
+            top: 4,
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(5),
               decoration: const BoxDecoration(
                 gradient: AppTheme.primaryGradient,
                 shape: BoxShape.circle,
               ),
               constraints: const BoxConstraints(
-                minWidth: 20,
-                minHeight: 20,
+                minWidth: 22,
+                minHeight: 22,
               ),
               child: Text(
                 badge!,
@@ -593,34 +636,57 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphicDecoration(),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryPink.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: gradient,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: (gradient is LinearGradient) 
+                      ? (gradient as LinearGradient).colors.first.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.textPrimary,
+                    height: 1.0,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     color: AppTheme.textSecondary,
                   ),
                 ),
@@ -682,6 +748,7 @@ class _SwipeButtonState extends State<_SwipeButton>
         widget.onPressed();
       },
       onTapCancel: () => _controller.reverse(),
+      behavior: HitTestBehavior.opaque,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(

@@ -92,8 +92,14 @@ class WalletService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((t) => Transaction.fromJson(t)).toList();
+        final decoded = json.decode(response.body);
+        final List<dynamic> data = decoded is Map<String, dynamic>
+            ? (decoded['content'] is List ? decoded['content'] as List : const [])
+            : (decoded is List ? decoded : const []);
+        return data
+            .whereType<Map>()
+            .map((t) => Transaction.fromJson(Map<String, dynamic>.from(t)))
+            .toList();
       }
       return [];
     } catch (e) {

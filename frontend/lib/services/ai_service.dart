@@ -228,4 +228,46 @@ class AIService {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>?> chatWithWingman({
+    required String message,
+    String? context,
+    String? tone,
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      // Allow demo mode or authenticated
+      if (token == null) {
+          // Mock response for quick testing if auth fails
+          await Future.delayed(const Duration(milliseconds: 800));
+          return {
+             'response': "I can't reach the server right now, but I'm here! Tell me more about what's going on.",
+             'suggested_actions': ["Try again", "Check connection"]
+          };
+      }
+
+      final response = await http.post(
+        Uri.parse('$API_URL/api/ai/wingman/chat'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          // user_id handled by backend token usually, but we pass it for the AI engine structure
+          'user_id': "current_user", 
+          'message': message,
+          'context': context,
+          'tone': tone,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Error chatting with Wingman: $e');
+      return null;
+    }
+  }
 }

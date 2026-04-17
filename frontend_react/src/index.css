@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  /* Ultra-Premium Color Palette */
+  --primary-pink: #FD297B;
+  --deep-royal: #1E1B4B;
+  --electric-violet: #FF655B;
+  --cyber-cyan: #00F2FE;
+  --golden-glow: #FDE047;
+
+  --dark-void: #F9FAFB;
+  --glass-surface: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.05);
+
+  /* Gradients */
+  --premium-gradient: linear-gradient(135deg, #FD297B 0%, #FF655B 100%);
+  --cyber-gradient: linear-gradient(90deg, #00F2FE 0%, #4facfe 100%);
+  --dark-gradient: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+
+  /* Shadows */
+  --neon-shadow: 0 0 20px rgba(253, 41, 123, 0.2);
+  --deep-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--dark-void);
+  background-image: var(--dark-gradient);
+  background-attachment: fixed;
+  color: #1F2937;
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Premium Typography */
+h1,
+h2,
+h3,
+h4,
+.elite-font {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.serif-italic {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Glassmorphism System */
+.glass-panel {
+  background: var(--glass-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--deep-shadow);
+  border-radius: 24px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Text Effects */
+.text-shimmer {
+  background: linear-gradient(to right,
+      #fff 20%,
+      var(--primary-pink) 40%,
+      var(--electric-violet) 60%,
+      #fff 80%);
+  background-size: 200% auto;
+  color: #000;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 3s linear infinite;
+}
+
+@keyframes shimmer-text {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Animations */
+@keyframes float-ethereal {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+
+  50% {
+    transform: translateY(-15px) rotate(1deg);
+  }
+}
+
+.animate-ethereal {
+  animation: float-ethereal 6s ease-in-out infinite;
+}
+
+.neural-pulse {
+  position: relative;
+}
+
+.neural-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: var(--primary-pink);
+  opacity: 0.2;
+  animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Scrollers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--premium-gradient);
+  border-radius: 10px;
+}
+
+/* Layout Utilities */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Swipe Interaction Visuals */
+.swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 20px 40px;
+  border-radius: 20px;
+  font-size: 32px;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 100;
+}

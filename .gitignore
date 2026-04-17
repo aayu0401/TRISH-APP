@@ -1,6 +1,96 @@
+# ─── OS ──────────────────────────────────────────────────────────────
 .DS_Store
-**/target
-**/.gradle
-**/.idea
-**/build
-**/venv
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ─── IDE / Editor ────────────────────────────────────────────────────
+**/.idea/
+**/.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# ─── Logs ────────────────────────────────────────────────────────────
+*.log
+*.err.log
+*.out.log
+backend-dev.err.log
+backend-dev.out.log
+backend/backend-dev.err.log
+backend/backend-dev.out.log
+hs_err_pid*.log
+
+# ─── Java / Maven / Spring Boot ──────────────────────────────────────
+**/target/
+**/.gradle/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+.mvn/wrapper/maven-wrapper.jar
+
+# ─── Python / AI Engine ──────────────────────────────────────────────
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/venv/
+**/.venv/
+**/env/
+**/*.egg-info/
+**/.eggs/
+**/dist/
+**/*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Flutter / Dart ──────────────────────────────────────────────────
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/flutter_*.stamp
+frontend/pubspec.lock
+frontend/pub_get_output*.txt
+frontend/.packages
+frontend/build/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/app/google-services.json
+frontend/ios/Pods/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/macos/Pods/
+
+# ─── Node / React Frontend ───────────────────────────────────────────
+frontend_react/node_modules/
+frontend_react/.next/
+frontend_react/dist/
+frontend_react/build/
+frontend_react/.env.local
+frontend_react/.env.*.local
+frontend_react/npm-debug.log*
+frontend_react/yarn-debug.log*
+frontend_react/yarn-error.log*
+frontend_react/.pnpm-debug.log*
+
+# ─── Sensitive Config (keep templates, ignore real secrets) ──────────
+# Do NOT commit environment-specific secrets — use env vars in CI/CD
+# backend/src/main/resources/application-prod.properties  ← uncomment if it contains real secrets
+
+# ─── Misc Build & Temp Files ─────────────────────────────────────────
+devices.txt
+setup_app.ps1
+*.tmp
+*.bak
+*.orig

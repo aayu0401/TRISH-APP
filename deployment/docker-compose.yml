@@ -20,26 +20,32 @@ services:
   # Spring Boot Backend
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: trish-backend
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trish_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      AI_ENGINE_URL: http://ai-engine:8000
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_IN_PROD}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:5173}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8080:8080"
     depends_on:
       - postgres
+      - ai-engine
     networks:
       - trish-network
     volumes:
-      - ./uploads:/app/uploads
+      - ../uploads:/app/uploads
 
   # FastAPI AI Engine
   ai-engine:
     build:
-      context: ./ai_engine
+      context: ../ai_engine
       dockerfile: Dockerfile
     container_name: trish-ai
     ports:

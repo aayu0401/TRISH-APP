@@ -49,6 +49,7 @@ public class AuthService {
         user.setIsActive(true);
         user.setIsPremium(false);
         user.setIsVerified(false);
+        user.setEmailVerified(false);
         
         // Set default preferences
         user.setMinAge(18);

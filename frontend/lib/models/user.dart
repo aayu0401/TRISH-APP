@@ -1,3 +1,5 @@
+import '../utils/url_utils.dart';
+
 class User {
   final int? id;
   final String email;
@@ -17,6 +19,7 @@ class User {
   final int? maxDistance;
   final bool isPremium;
   final bool isActive;
+  final bool emailVerified;
 
   User({
     this.id,
@@ -37,6 +40,7 @@ class User {
     this.maxDistance,
     this.isPremium = false,
     this.isActive = true,
+    this.emailVerified = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -65,6 +69,7 @@ class User {
       maxDistance: json['maxDistance'],
       isPremium: json['isPremium'] ?? false,
       isActive: json['isActive'] ?? true,
+      emailVerified: json['emailVerified'] ?? false,
     );
   }
 
@@ -87,6 +92,7 @@ class User {
       'maxDistance': maxDistance,
       'isPremium': isPremium,
       'isActive': isActive,
+      'emailVerified': emailVerified,
     };
   }
 
@@ -116,7 +122,7 @@ class Photo {
   factory Photo.fromJson(Map<String, dynamic> json) {
     return Photo(
       id: json['id'],
-      url: json['url'] ?? '',
+      url: resolveMediaUrl(json['url']?.toString()),
       displayOrder: json['displayOrder'] ?? 0,
     );
   }

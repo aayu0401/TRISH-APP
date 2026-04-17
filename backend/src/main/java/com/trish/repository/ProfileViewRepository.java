@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface ProfileViewRepository extends JpaRepository<ProfileView, Long> {
-    
+
     Page<ProfileView> findByViewedUserOrderByViewedAtDesc(User viewedUser, Pageable pageable);
     
     @Query("SELECT COUNT(DISTINCT pv.viewer) FROM ProfileView pv WHERE pv.viewedUser = :user")

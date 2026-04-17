@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "reports", indexes = {
     @Index(name = "idx_reporter", columnList = "reporter_id"),
     @Index(name = "idx_reported", columnList = "reported_id"),
-    @Index(name = "idx_status", columnList = "status")
+    @Index(name = "idx_report_status", columnList = "status")
 })
 @Data
 @NoArgsConstructor

@@ -1,6 +1,5 @@
 package com.trish.controller;
 
-import com.trish.dto.ApiResponse;
 import com.trish.model.User;
 import com.trish.service.EnhancedUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +31,11 @@ public class EnhancedUserController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
-        
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") 
-            ? Sort.Direction.DESC 
-            : Sort.Direction.ASC;
-        
+
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC")
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         Page<User> userPage = enhancedUserService.getUsersWithPagination(pageable);
 
@@ -56,16 +55,18 @@ public class EnhancedUserController {
      */
     @GetMapping("/nearby")
     public ResponseEntity<List<User>> getNearbyUsers(
-            @RequestParam Double latitude,
-            @RequestParam Double longitude,
-            @RequestParam(defaultValue = "50") Double radiusKm,
+            Authentication authentication,
+            @RequestParam(required = false) Double radiusKm,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
+        String email = authentication.getName();
+        User searcher = enhancedUserService.getUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         Pageable pageable = PageRequest.of(page, size);
         List<User> nearbyUsers = enhancedUserService.searchUsersByLocation(
-            latitude, longitude, radiusKm, pageable
-        );
+                searcher, radiusKm, pageable);
 
         return ResponseEntity.ok(nearbyUsers);
     }
@@ -76,13 +77,12 @@ public class EnhancedUserController {
     @GetMapping("/statistics")
     public ResponseEntity<EnhancedUserService.UserStatistics> getUserStatistics(
             Authentication authentication) {
-        
+
         String email = authentication.getName();
         User user = enhancedUserService.getUserByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        EnhancedUserService.UserStatistics stats = 
-            enhancedUserService.getUserStatistics(user.getId());
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        EnhancedUserService.UserStatistics stats = enhancedUserService.getUserStatistics(user.getId());
 
         return ResponseEntity.ok(stats);
     }
@@ -94,7 +94,7 @@ public class EnhancedUserController {
     public ResponseEntity<List<User>> getActiveUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
         List<User> activeUsers = enhancedUserService.getActiveUsers(pageable);
 
@@ -108,7 +108,7 @@ public class EnhancedUserController {
     public ResponseEntity<List<User>> getVerifiedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
         List<User> verifiedUsers = enhancedUserService.getVerifiedUsers(pageable);
 
@@ -125,7 +125,7 @@ public class EnhancedUserController {
         health.put("timestamp", System.currentTimeMillis());
         health.put("service", "User Service");
         health.put("version", "2.0.0");
-        
+
         return ResponseEntity.ok(health);
     }
 }
