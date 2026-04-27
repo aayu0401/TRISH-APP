@@ -6,7 +6,7 @@ import 'auth_service.dart';
 class VideoCallService {
   final AuthService _authService = AuthService();
 
-  Future<Map<String, dynamic>> _getHeaders() async {
+  Future<Map<String, String>> _getHeaders() async {
     return await _authService.getAuthHeaders();
   }
 

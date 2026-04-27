@@ -3,7 +3,6 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import '../theme/app_theme.dart';
 import '../models/user.dart';
 import '../services/match_service.dart';
-import '../services/auth_service.dart';
 import '../config.dart';
 import 'matches_screen.dart';
 import 'profile_screen.dart';
@@ -16,7 +15,30 @@ import 'wingman_screen.dart';
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-// ... (omitted lines)
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _matchService = MatchService();
+  List<User> _recommendations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecommendations();
+  }
+
+  Future<void> _loadRecommendations() async {
+    try {
+      final recs = await _matchService.getRecommendations();
+      setState(() { _recommendations = recs; _isLoading = false; });
+    } catch (_) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<bool> _handleSwipe(int prev, int? curr, CardSwiperDirection dir) async {
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {

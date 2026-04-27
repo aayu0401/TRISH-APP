@@ -71,7 +71,7 @@ class _MatchCardState extends State<MatchCard>
 
   Widget _buildImage() {
     final photoUrl =
-        widget.user.photos.isNotEmpty ? widget.user.photos.first : '';
+        widget.user.photos.isNotEmpty ? widget.user.photos.first.url : '';
 
     return Stack(
       children: [
@@ -125,7 +125,7 @@ class _MatchCardState extends State<MatchCard>
           ),
         ),
         // Online Status
-        if (widget.showOnlineStatus && widget.user.isOnline)
+        if (widget.showOnlineStatus && widget.user.isActive)
           Positioned(
             top: 8,
             right: 8,
@@ -143,7 +143,7 @@ class _MatchCardState extends State<MatchCard>
             ),
           ),
         // Verified Badge
-        if (widget.user.isVerified)
+        if (widget.user.emailVerified)
           Positioned(
             top: 8,
             left: 8,
@@ -314,7 +314,7 @@ class ConversationCard extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
-    final photoUrl = user.photos.isNotEmpty ? user.photos.first : '';
+    final photoUrl = user.photos.isNotEmpty ? user.photos.first.url : '';
 
     return Stack(
       children: [
@@ -348,7 +348,7 @@ class ConversationCard extends StatelessWidget {
                   ),
           ),
         ),
-        if (user.isOnline)
+        if (user.isActive)
           Positioned(
             bottom: 2,
             right: 2,

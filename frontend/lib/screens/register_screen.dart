@@ -164,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           'Apply for Membership',
                           style: TextStyle(
                             fontSize: 32,
-                            fontWeight: FontWeight.w950,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: -1,
                           ),

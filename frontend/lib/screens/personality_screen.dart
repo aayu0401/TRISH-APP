@@ -12,7 +12,6 @@ class PersonalityScreen extends StatefulWidget {
 }
 
 class _PersonalityScreenState extends State<PersonalityScreen> {
-  final _personalityService = PersonalityService();
   int _currentQuestion = 0;
   final Map<String, dynamic> _answers = {};
   bool _isCompleted = false;

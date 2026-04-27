@@ -121,7 +121,7 @@ class _ProfileCardState extends State<ProfileCard>
 
   Widget _buildBackgroundImage() {
     final photoUrl = widget.user.photos.isNotEmpty
-        ? widget.user.photos[_currentPhotoIndex]
+        ? widget.user.photos[_currentPhotoIndex].url
         : '';
 
     return Positioned.fill(
@@ -203,7 +203,7 @@ class _ProfileCardState extends State<ProfileCard>
 
   Widget _buildUserInfo() {
     final age = _calculateAge(widget.user.dateOfBirth);
-    final distance = widget.user.distance?.toStringAsFixed(1) ?? '?';
+    final distance = '?';
 
     return Positioned(
       bottom: 80,
@@ -233,7 +233,7 @@ class _ProfileCardState extends State<ProfileCard>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (widget.user.isVerified)
+              if (widget.user.emailVerified)
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(

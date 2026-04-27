@@ -10,6 +10,9 @@ import 'kyc_screen.dart';
 import 'personality_screen.dart';
 import 'subscription_screen.dart';
 import 'profile_views_screen.dart';
+import 'settings_screen.dart';
+import 'blind_date_screen.dart';
+import 'profile_edit_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -465,11 +468,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 40),
                           
                           // Settings & Logout Buttons
+                          // Quick Actions
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildQuickAction(
+                                  Icons.edit_outlined, 'Edit Profile',
+                                  AppTheme.accentBlue,
+                                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileEditScreen())),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildQuickAction(
+                                  Icons.auto_fix_high, 'Blind Date',
+                                  const Color(0xFF6366F1),
+                                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlindDateScreen())),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
                                   icon: const Icon(Icons.settings, size: 20),
                                   label: const Text('SETTINGS'),
                                   style: OutlinedButton.styleFrom(
@@ -567,6 +591,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

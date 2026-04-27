@@ -15,7 +15,6 @@ class _ProfileViewsScreenState extends State<ProfileViewsScreen> {
   final _profileViewService = ProfileViewService();
   final _matchService = MatchService();
   List<User> _viewers = [];
-  int _totalCount = 0;
   bool _isLoading = true;
 
   @override
@@ -49,8 +48,6 @@ class _ProfileViewsScreenState extends State<ProfileViewsScreen> {
         _viewers = (result['viewers'] as List?)
                 ?.map((j) => User.fromJson(j))
                 .toList() ??
-            [];
-        _totalCount = result['totalCount'] ?? 0;
         _isLoading = false;
       });
     } catch (e) {

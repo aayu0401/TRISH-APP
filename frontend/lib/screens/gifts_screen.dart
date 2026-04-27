@@ -631,9 +631,6 @@ class _GiftsScreenState extends State<GiftsScreen> with SingleTickerProviderStat
         color = AppTheme.textTertiary;
         label = 'Pending';
         break;
-      default:
-        color = AppTheme.textTertiary;
-        label = status.toString().split('.').last;
     }
 
     return Container(

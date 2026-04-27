@@ -28,7 +28,6 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
   
   List<User> _recommendations = [];
   bool _isLoading = true;
-  int _currentCardIndex = 0;
   int _todayLikes = 0;
   int _todayMatches = 0;
 

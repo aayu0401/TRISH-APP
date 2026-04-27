@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
   const AnalyticsDashboardScreen({Key? key}) : super(key: key);
@@ -143,79 +142,13 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                               const SizedBox(height: 20),
                               SizedBox(
                                 height: 200,
-                                child: LineChart(
-                                  LineChartData(
-                                    gridData: FlGridData(show: false),
-                                    titlesData: FlTitlesData(
-                                      leftTitles: AxisTitles(
-                                        sideTitles: SideTitles(showTitles: false),
-                                      ),
-                                      rightTitles: AxisTitles(
-                                        sideTitles: SideTitles(showTitles: false),
-                                      ),
-                                      topTitles: AxisTitles(
-                                        sideTitles: SideTitles(showTitles: false),
-                                      ),
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          getTitlesWidget: (value, meta) {
-                                            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                                            if (value.toInt() >= 0 && value.toInt() < days.length) {
-                                              return Text(
-                                                days[value.toInt()],
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.white60,
-                                                  fontSize: 12,
-                                                ),
-                                              );
-                                            }
-                                            return const Text('');
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    borderData: FlBorderData(show: false),
-                                    lineBarsData: [
-                                      LineChartBarData(
-                                        spots: [
-                                          const FlSpot(0, 30),
-                                          const FlSpot(1, 35),
-                                          const FlSpot(2, 28),
-                                          const FlSpot(3, 42),
-                                          const FlSpot(4, 38),
-                                          const FlSpot(5, 45),
-                                          const FlSpot(6, 40),
-                                        ],
-                                        isCurved: true,
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                                        ),
-                                        barWidth: 3,
-                                        dotData: FlDotData(
-                                          show: true,
-                                          getDotPainter: (spot, percent, barData, index) {
-                                            return FlDotCirclePainter(
-                                              radius: 4,
-                                              color: const Color(0xFF4facfe),
-                                              strokeWidth: 2,
-                                              strokeColor: Colors.white,
-                                            );
-                                          },
-                                        ),
-                                        belowBarData: BarAreaData(
-                                          show: true,
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              const Color(0xFF4facfe).withOpacity(0.3),
-                                              const Color(0xFF00f2fe).withOpacity(0.1),
-                                            ],
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                child: CustomPaint(
+                                  size: const Size(double.infinity, 200),
+                                  painter: _SimpleChartPainter(
+                                    data: const [30, 35, 28, 42, 38, 45, 40],
+                                    labels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                                    lineColor: const Color(0xFF4facfe),
+                                    fillColor: const Color(0xFF4facfe),
                                   ),
                                 ),
                               ),
@@ -383,4 +316,80 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
       ),
     );
   }
+}
+
+class _SimpleChartPainter extends CustomPainter {
+  final List<double> data;
+  final List<String> labels;
+  final Color lineColor;
+  final Color fillColor;
+
+  _SimpleChartPainter({
+    required this.data,
+    required this.labels,
+    required this.lineColor,
+    required this.fillColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final maxVal = data.reduce((a, b) => a > b ? a : b) * 1.2;
+    final chartH = size.height - 30;
+    final stepX = size.width / (data.length - 1);
+
+    final points = <Offset>[];
+    for (int i = 0; i < data.length; i++) {
+      final x = i * stepX;
+      final y = chartH - (data[i] / maxVal * chartH);
+      points.add(Offset(x, y));
+    }
+
+    // Fill
+    final fillPath = Path()..moveTo(0, chartH);
+    for (final p in points) fillPath.lineTo(p.dx, p.dy);
+    fillPath.lineTo(size.width, chartH);
+    fillPath.close();
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [fillColor.withOpacity(0.3), fillColor.withOpacity(0.02)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, chartH));
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Line
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+    for (int i = 1; i < points.length; i++) {
+      final cp1 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i - 1].dy);
+      final cp2 = Offset((points[i - 1].dx + points[i].dx) / 2, points[i].dy);
+      linePath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, points[i].dx, points[i].dy);
+    }
+    canvas.drawPath(linePath, linePaint);
+
+    // Dots
+    final dotPaint = Paint()..color = lineColor;
+    final dotBorder = Paint()..color = Colors.white..strokeWidth = 2..style = PaintingStyle.stroke;
+    for (final p in points) {
+      canvas.drawCircle(p, 4, dotPaint);
+      canvas.drawCircle(p, 4, dotBorder);
+    }
+
+    // Labels
+    final labelStyle = TextStyle(color: Colors.white60, fontSize: 11);
+    for (int i = 0; i < labels.length; i++) {
+      final tp = TextPainter(text: TextSpan(text: labels[i], style: labelStyle), textDirection: TextDirection.ltr)..layout();
+      tp.paint(canvas, Offset(i * stepX - tp.width / 2, size.height - 20));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -37,7 +37,6 @@ class _PremiumButtonState extends State<PremiumButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -57,20 +56,9 @@ class _PremiumButtonState extends State<PremiumButton>
     super.dispose();
   }
 
-  void _handleTapDown(TapDownDetails details) {
-    setState(() => _isPressed = true);
-    _controller.forward();
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    setState(() => _isPressed = false);
-    _controller.reverse();
-  }
-
-  void _handleTapCancel() {
-    setState(() => _isPressed = false);
-    _controller.reverse();
-  }
+  void _handleTapDown(TapDownDetails details) => _controller.forward();
+  void _handleTapUp(TapUpDetails details) => _controller.reverse();
+  void _handleTapCancel() => _controller.reverse();
 
   @override
   Widget build(BuildContext context) {

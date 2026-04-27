@@ -26,7 +26,6 @@ class _KYCScreenState extends State<KYCScreen> {
   
   bool _isLoading = true;
   bool _isSubmitting = false;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -67,7 +66,6 @@ class _KYCScreenState extends State<KYCScreen> {
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     List<File> docImages = [_frontImage!];

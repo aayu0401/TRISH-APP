@@ -11,7 +11,6 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  final _subscriptionService = SubscriptionService();
   bool _isLoading = true;
   int _selectedPlanIndex = 1; // Default to the middle plan (popular)
 
