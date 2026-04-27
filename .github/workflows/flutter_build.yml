@@ -1,0 +1,53 @@
+name: Flutter Build Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows you to manually trigger the build from GitHub UI
+
+jobs:
+  build:
+    name: Build APK and AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.19.x' # Use compatible version
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: ./frontend
+        run: flutter build apk --release
+
+      - name: Build App Bundle (AAB)
+        working-directory: ./frontend
+        run: flutter build appbundle --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: frontend/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab
+          path: frontend/build/app/outputs/bundle/release/app-release.aab
